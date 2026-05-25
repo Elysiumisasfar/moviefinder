@@ -7,18 +7,18 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [featuredMovies, setFeaturedMovies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");           // ← Fixed: using the error state
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Load Trending movies for homepage
+  // Load Trending movies
   useEffect(() => {
     loadFeaturedMovies();
   }, []);
 
   async function loadFeaturedMovies() {
-    const terms = ["Inception", "Dune", "Oppenheimer", "Interstellar", "The Batman"];
+    const terms = ["Inception", "Dune", "Oppenheimer", "Interstellar"];
     try {
       const promises = terms.map(term => 
         fetch(`https://www.omdbapi.com/?s=${term}&apikey=${API_KEY}`)
@@ -32,7 +32,7 @@ function App() {
     }
   }
 
-  // Live search as you type
+  // Live search
   useEffect(() => {
     if (searchTerm.trim().length < 3) {
       setMovies([]);
@@ -77,18 +77,17 @@ function App() {
   const clearSearch = () => {
     setSearchTerm("");
     setMovies([]);
+    setError("");
   };
 
   return (
     <div className="min-h-screen bg-[#0a1428] text-white">
-      {/* Navbar */}
       <nav className="fixed top-0 w-full bg-black/95 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
           <h1 className="text-3xl font-bold">MovieFinder</h1>
         </div>
       </nav>
 
-      {/* Hero */}
       <div className="pt-32 pb-16 px-6 text-center">
         <h1 className="text-6xl font-bold mb-6">Find Your Next Favorite Movie</h1>
         <p className="text-xl text-gray-400 mb-10">Search by title, actor, or keyword</p>
@@ -109,7 +108,6 @@ function App() {
         </div>
       </div>
 
-      {/* Search Results */}
       {searchTerm.length > 2 ? (
         <div className="max-w-7xl mx-auto px-6 pb-20">
           <h2 className="text-3xl font-semibold mb-8">Results for "{searchTerm}"</h2>
@@ -129,7 +127,6 @@ function App() {
           </div>
         </div>
       ) : (
-        /* Homepage Trending */
         <div className="max-w-7xl mx-auto px-6 pb-20">
           <h2 className="text-4xl font-bold mb-10">Trending Right Now</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -148,7 +145,6 @@ function App() {
         </div>
       )}
 
-      {/* Detailed Modal */}
       {selectedMovie && (
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-6">
           <div className="bg-slate-900 rounded-3xl max-w-4xl w-full p-10">
@@ -162,9 +158,7 @@ function App() {
                 <div className="flex-1">
                   <h2 className="text-4xl font-bold">{movieDetails.Title}</h2>
                   <p className="text-2xl text-slate-400">{movieDetails.Year} • {movieDetails.Runtime}</p>
-                  
                   <p className="mt-8 text-lg leading-relaxed">{movieDetails.Plot}</p>
-
                   <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-y-4 text-sm">
                     <p><strong>Director:</strong> {movieDetails.Director}</p>
                     <p><strong>Writer:</strong> {movieDetails.Writer}</p>
