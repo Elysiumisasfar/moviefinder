@@ -39,7 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist' # 👈 Pointing back to the root dist folder
+          path: './build' # 👈 Pointing back to the root dist folder
 
       - name: Deploy to GitHub Pages
         id: deployment
