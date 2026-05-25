@@ -12,19 +12,18 @@ function App() {
   const [movieDetails, setMovieDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Load some featured movies on homepage load
+  // Load Trending movies for homepage
   useEffect(() => {
     loadFeaturedMovies();
   }, []);
 
   async function loadFeaturedMovies() {
+    const terms = ["Inception", "Dune", "Oppenheimer", "Interstellar", "The Batman"];
     try {
-      const searches = ["Avengers", "Inception", "Dune", "Oppenheimer"];
-      const promises = searches.map(term => 
+      const promises = terms.map(term => 
         fetch(`https://www.omdbapi.com/?s=${term}&apikey=${API_KEY}`)
           .then(res => res.json())
       );
-      
       const results = await Promise.all(promises);
       const allMovies = results.flatMap(r => r.Search || []).slice(0, 8);
       setFeaturedMovies(allMovies);
@@ -33,7 +32,7 @@ function App() {
     }
   }
 
-  // Live search
+  // Live search as you type
   useEffect(() => {
     if (searchTerm.trim().length < 3) {
       setMovies([]);
@@ -46,7 +45,6 @@ function App() {
   async function searchMovies() {
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch(`https://www.omdbapi.com/?s=${searchTerm}&apikey=${API_KEY}`);
       const data = await res.json();
@@ -62,15 +60,11 @@ function App() {
     }
   }
 
-  // ←←← NEW: Fetch full details using second API call
   async function openMovie(movie) {
     setSelectedMovie(movie);
     setDetailsLoading(true);
-    
     try {
-      const res = await fetch(
-        `https://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${API_KEY}`
-      );
+      const res = await fetch(`https://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${API_KEY}`);
       const data = await res.json();
       setMovieDetails(data);
     } catch (err) {
@@ -80,80 +74,73 @@ function App() {
     }
   }
 
+  const clearSearch = () => {
+    setSearchTerm("");
+    setMovies([]);
+  };
+
   return (
     <div className="min-h-screen bg-[#0a1428] text-white">
       {/* Navbar */}
       <nav className="fixed top-0 w-full bg-black/95 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tighter">MovieFinder</h1>
-          <div className="flex gap-8 text-lg">
-            <a href="#" className="hover:text-blue-400">Home</a>
-            <a href="#" className="hover:text-blue-400">Browse</a>
-            <a href="#" className="hover:text-blue-400">Top 10</a>
-          </div>
+          <h1 className="text-3xl font-bold">MovieFinder</h1>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="pt-24 pb-20 px-6 text-center bg-gradient-to-b from-[#0a1428] to-[#1e2937]">
-        <h1 className="text-6xl md:text-7xl font-bold mb-6">Find Your Next Favorite Movie</h1>
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-          Discover millions of movies and TV shows. Search by title, actor, director, or genre.
-        </p>
+      {/* Hero */}
+      <div className="pt-32 pb-16 px-6 text-center">
+        <h1 className="text-6xl font-bold mb-6">Find Your Next Favorite Movie</h1>
+        <p className="text-xl text-gray-400 mb-10">Search by title, actor, or keyword</p>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto flex gap-3">
           <input
             type="text"
-            placeholder="Search movies, actors, directors..."
+            placeholder="Inception, Leonardo DiCaprio..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/10 border border-white/30 rounded-2xl px-8 py-6 text-xl focus:outline-none focus:border-blue-500 placeholder-gray-400"
+            className="flex-1 bg-white/10 border border-white/30 rounded-2xl px-8 py-6 text-xl focus:outline-none focus:border-blue-500"
           />
+          {searchTerm && (
+            <button onClick={clearSearch} className="px-8 py-6 bg-red-600 rounded-2xl font-medium">
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
       {/* Search Results */}
-      {searchTerm.length > 2 && (
-        <div className="max-w-7xl mx-auto px-6 py-12">
+      {searchTerm.length > 2 ? (
+        <div className="max-w-7xl mx-auto px-6 pb-20">
           <h2 className="text-3xl font-semibold mb-8">Results for "{searchTerm}"</h2>
           {loading && <p className="text-center">Loading...</p>}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {movies.map(movie => (
-              <div 
-                key={movie.imdbID} 
-                onClick={() => openMovie(movie)}
-                className="cursor-pointer hover:scale-105 transition"
-              >
+              <div key={movie.imdbID} onClick={() => openMovie(movie)} className="cursor-pointer hover:scale-105 transition-all">
                 {movie.Poster !== "N/A" ? (
                   <img src={movie.Poster} alt={movie.Title} className="rounded-2xl w-full h-80 object-cover" />
                 ) : (
                   <div className="h-80 bg-slate-800 rounded-2xl flex items-center justify-center text-6xl">🎬</div>
                 )}
                 <h3 className="mt-3 font-semibold">{movie.Title}</h3>
-                <p className="text-slate-400 text-sm">{movie.Year}</p>
+                <p className="text-slate-400">{movie.Year}</p>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* Homepage - Trending */}
-      {!searchTerm && (
+      ) : (
+        /* Homepage Trending */
         <div className="max-w-7xl mx-auto px-6 pb-20">
           <h2 className="text-4xl font-bold mb-10">Trending Right Now</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {featuredMovies.map(movie => (
-              <div 
-                key={movie.imdbID} 
-                onClick={() => openMovie(movie)}
-                className="cursor-pointer hover:scale-105 transition-all"
-              >
+              <div key={movie.imdbID} onClick={() => openMovie(movie)} className="cursor-pointer hover:scale-105 transition-all">
                 {movie.Poster !== "N/A" ? (
                   <img src={movie.Poster} alt={movie.Title} className="rounded-2xl w-full h-80 object-cover" />
                 ) : (
                   <div className="h-80 bg-slate-800 rounded-2xl flex items-center justify-center text-6xl">🎬</div>
                 )}
-                <h3 className="mt-3 font-semibold text-lg">{movie.Title}</h3>
+                <h3 className="mt-3 font-semibold">{movie.Title}</h3>
                 <p className="text-slate-400">{movie.Year}</p>
               </div>
             ))}
@@ -166,7 +153,7 @@ function App() {
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-6">
           <div className="bg-slate-900 rounded-3xl max-w-4xl w-full p-10">
             {detailsLoading ? (
-              <p className="text-center py-20 text-xl">Loading full details...</p>
+              <p className="text-center py-20">Loading details...</p>
             ) : movieDetails ? (
               <div className="flex flex-col md:flex-row gap-10">
                 {movieDetails.Poster !== "N/A" && (
@@ -176,9 +163,7 @@ function App() {
                   <h2 className="text-4xl font-bold">{movieDetails.Title}</h2>
                   <p className="text-2xl text-slate-400">{movieDetails.Year} • {movieDetails.Runtime}</p>
                   
-                  <p className="mt-8 text-lg leading-relaxed">
-                    {movieDetails.Plot}
-                  </p>
+                  <p className="mt-8 text-lg leading-relaxed">{movieDetails.Plot}</p>
 
                   <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-y-4 text-sm">
                     <p><strong>Director:</strong> {movieDetails.Director}</p>
