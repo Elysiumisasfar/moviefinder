@@ -7,7 +7,7 @@ function App() {
   const [movies, setMovies] = useState([]);
   const [featuredMovies, setFeaturedMovies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");           // ← Fixed: using the error state
+  const [error, setError] = useState("");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -112,6 +112,8 @@ function App() {
         <div className="max-w-7xl mx-auto px-6 pb-20">
           <h2 className="text-3xl font-semibold mb-8">Results for "{searchTerm}"</h2>
           {loading && <p className="text-center">Loading...</p>}
+          {error && <p className="text-center text-red-500">{error}</p>}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {movies.map(movie => (
               <div key={movie.imdbID} onClick={() => openMovie(movie)} className="cursor-pointer hover:scale-105 transition-all">
