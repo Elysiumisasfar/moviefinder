@@ -14,23 +14,23 @@ function App() {
 
   // Load Trending movies
   useEffect(() => {
-    loadFeaturedMovies();
-  }, []);
-
-  async function loadFeaturedMovies() {
-    const terms = ["Inception", "Dune", "Oppenheimer", "Interstellar"];
-    try {
-      const promises = terms.map(term => 
-        fetch(`https://www.omdbapi.com/?s=${term}&apikey=${API_KEY}`)
-          .then(res => res.json())
-      );
-      const results = await Promise.all(promises);
-      const allMovies = results.flatMap(r => r.Search || []).slice(0, 8);
-      setFeaturedMovies(allMovies);
-    } catch (e) {
-      console.error(e);
+    async function loadFeaturedMovies() {
+      const terms = ["Inception", "Dune", "Oppenheimer", "Interstellar"];
+      try {
+        const promises = terms.map(term => 
+          fetch(`https://www.omdbapi.com/?s=${term}&apikey=${API_KEY}`)
+            .then(res => res.json())
+        );
+        const results = await Promise.all(promises);
+        const allMovies = results.flatMap(r => r.Search || []).slice(0, 8);
+        setFeaturedMovies(allMovies);
+      } catch (e) {
+        console.error(e);
+      }
     }
-  }
+
+    loadFeaturedMovies();
+  }, []); // Empty array is completely safe here now
 
   // Live search
   useEffect(() => {
@@ -38,29 +38,31 @@ function App() {
       setMovies([]);
       return;
     }
+
+    async function searchMovies() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`https://www.omdbapi.com/?s=${searchTerm}&apikey=${API_KEY}`);
+        const data = await res.json();
+        if (data.Response === "True") {
+          setMovies(data.Search);
+        } else {
+          setError("No results found");
+        }
+      } catch (err) {
+        setError("Failed to load movies");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     const timer = setTimeout(() => {
       searchMovies();
     }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
-  async function searchMovies() {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch(`https://www.omdbapi.com/?s=${searchTerm}&apikey=${API_KEY}`);
-      const data = await res.json();
-      if (data.Response === "True") {
-        setMovies(data.Search);
-      } else {
-        setError("No results found");
-      }
-    } catch (err) {
-      setError("Failed to load movies");
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => clearTimeout(timer);
+  }, [searchTerm]); // Only depends on searchTerm, which is correct!
 
   async function openMovie(movie) {
     setSelectedMovie(movie);
