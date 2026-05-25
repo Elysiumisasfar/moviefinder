@@ -1,7 +1,7 @@
 {
   "name": "react-course-crash",
   "version": "0.1.0",
-  "homepage": ".",
+  "homepage": "https://elysiumisasfar.github.io/moviefinder",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
