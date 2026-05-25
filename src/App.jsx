@@ -38,7 +38,9 @@ function App() {
       setMovies([]);
       return;
     }
-    const timer = setTimeout(() => searchMovies(), 500);
+    const timer = setTimeout(() => {
+      searchMovies();
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
