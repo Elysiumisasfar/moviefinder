@@ -7,14 +7,15 @@ function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('none');
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [movieDetails, setMovieDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // 1. CHOOSE A TRENDING/HOMEPAGE SEARCH TERM
-  // Since OMDb doesn't have a trending list, searching a major keyword like "Marvel", 
-  // "Star Wars", or "Batman" works great to populate a stunning homepage grid instantly!
-  const HOMEPAGE_KEYWORD = "Marvel"; 
-  const API_KEY = "da81a772"; // 👈 Put your actual OMDb API key here
+  const API_KEY = "da81a772";
+  const HOMEPAGE_KEYWORD = "Marvel";
 
-  // Fetch Homepage/Trending Content on Load
+  // Fetch Homepage Trending
   useEffect(() => {
     const fetchHomepageData = async () => {
       try {
@@ -33,7 +34,7 @@ function App() {
     fetchHomepageData();
   }, []);
 
-  // Handle Live Search Input
+  // Live Search
   const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -56,83 +57,175 @@ function App() {
     }
   };
 
+  // Open Movie Details (Second API Call)
+  const openMovieDetails = async (movie) => {
+    setSelectedMovie(movie);
+    setDetailsLoading(true);
+    try {
+      const response = await fetch(`https://www.omdbapi.com/?i=${movie.imdbID}&plot=full&apikey=${API_KEY}`);
+      const data = await response.json();
+      setMovieDetails(data);
+    } catch (error) {
+      console.error("Error fetching details:", error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedMovie(null);
+    setMovieDetails(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans">
-      {/* Navbar Header */}
-      <header className="p-6 bg-gray-800/50 backdrop-blur shadow-md sticky top-0 z-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <h1 className="text-2xl font-bold text-red-500 tracking-wider cursor-pointer" onClick={() => setSearchQuery('')}>
+      {/* Proper Navigation */}
+      <header className="p-6 bg-gray-800/90 backdrop-blur shadow-md sticky top-0 z-50 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-700">
+        <h1 
+          className="text-3xl font-bold text-red-500 tracking-wider cursor-pointer" 
+          onClick={() => setSearchQuery('')}
+        >
           🎬 MovieFinder
         </h1>
-        <input
-          type="text"
-          placeholder="Search for movies..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="px-4 py-2 w-full sm:w-80 bg-gray-700 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-        />
+
+        <nav className="flex items-center gap-6 text-lg">
+          <span onClick={() => setSearchQuery('')} className="cursor-pointer hover:text-red-400 transition">Home</span>
+          <span className="cursor-pointer hover:text-red-400 transition">Browse</span>
+          <span className="cursor-pointer hover:text-red-400 transition">Top Rated</span>
+        </nav>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search for movies..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="px-5 py-3 w-full sm:w-80 bg-gray-800 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+          />
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-3 bg-gray-800 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 text-sm cursor-pointer"
+          >
+            <option value="none">Sort By</option>
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+        </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Content */}
       <main className="p-6 max-w-7xl mx-auto">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading blockbusters...</div>
         ) : searchQuery === '' ? (
-          /* HOMEPAGE VIEW */
+          /* HOMEPAGE */
           <div>
-            {/* Big Hero Banner (Using the first item from our array) */}
+            {/* Hero Banner */}
             {trendingMovies.length > 0 && (
               <div 
-                className="relative h-64 sm:h-96 rounded-2xl overflow-hidden mb-10 bg-cover bg-center flex items-end p-6 sm:p-8 shadow-2xl"
+                className="relative h-80 sm:h-[500px] rounded-3xl overflow-hidden mb-12 bg-cover bg-center flex items-end p-8 shadow-2xl"
                 style={{ 
-                  backgroundImage: `linear-gradient(to top, rgba(17,24,39,0.95), rgba(17,24,39,0.3)), url(${trendingMovies[0].Poster})` 
+                  backgroundImage: `linear-gradient(to top, rgba(17,24,39,0.95), rgba(17,24,39,0.4)), url(${trendingMovies[0].Poster})` 
                 }}
               >
                 <div>
-                  <span className="bg-red-600 text-xs uppercase px-2 py-1 rounded font-bold mb-2 inline-block tracking-wide">
-                    Featured Today
-                  </span>
-                  <h2 className="text-2xl sm:text-4xl font-extrabold mb-1">{trendingMovies[0].Title}</h2>
-                  <p className="text-sm text-gray-300">Released: {trendingMovies[0].Year}</p>
+                  <span className="bg-red-600 text-xs uppercase px-4 py-2 rounded font-bold mb-3 inline-block">Featured Today</span>
+                  <h2 className="text-4xl sm:text-5xl font-extrabold mb-2">{trendingMovies[0].Title}</h2>
+                  <p className="text-lg text-gray-300">Released: {trendingMovies[0].Year}</p>
                 </div>
               </div>
             )}
 
-            {/* Trending Section Row */}
-            <section className="mb-10">
-              <h3 className="text-xl font-bold mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
-                🔥 Hot Picks right now
-              </h3>
-              <TrendingRow movies={trendingMovies} />
+            {/* Trending Section */}
+            <section>
+              <h3 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-3">🔥 Trending Right Now</h3>
+              <TrendingRow movies={trendingMovies} onMovieClick={openMovieDetails} />
             </section>
           </div>
         ) : (
-          /* SEARCH RESULTS VIEW */
+          /* SEARCH RESULTS */
           <section>
-            <h3 className="text-xl font-bold mb-6 text-gray-300">
+            <h3 className="text-2xl font-bold mb-6 text-gray-300">
               Search Results for <span className="text-white">"{searchQuery}"</span>
             </h3>
             {searchResults.length === 0 ? (
-              <div className="text-gray-500 text-center py-10">No movies found. Try typing something else!</div>
+              <div className="text-gray-500 text-center py-10">No movies found. Try something else!</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                {searchResults.map((movie) => (
-                  <div key={movie.imdbID} className="bg-gray-800 rounded-lg overflow-hidden hover:scale-105 transition duration-300 shadow-lg">
-                    <img 
-                      src={movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450?text=No+Poster"} 
-                      alt={movie.Title} 
-                      className="w-full h-64 sm:h-72 object-cover" 
-                    />
-                    <div className="p-3">
-                      <h4 className="font-semibold text-sm truncate">{movie.Title}</h4>
-                      <p className="text-xs text-gray-400">{movie.Year}</p>
+                {[...searchResults]
+                  .sort((a, b) => {
+                    const yearA = parseInt(a.Year) || 0;
+                    const yearB = parseInt(b.Year) || 0;
+                    if (sortBy === 'newest') return yearB - yearA;
+                    if (sortBy === 'oldest') return yearA - yearB;
+                    return 0;
+                  })
+                  .map((movie) => (
+                    <div 
+                      key={movie.imdbID} 
+                      onClick={() => openMovieDetails(movie)}
+                      className="bg-gray-800 rounded-lg overflow-hidden hover:scale-105 transition duration-300 shadow-lg cursor-pointer"
+                    >
+                      <img 
+                        src={movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450?text=No+Poster"} 
+                        alt={movie.Title} 
+                        className="w-full h-64 sm:h-72 object-cover" 
+                      />
+                      <div className="p-4">
+                        <h4 className="font-semibold truncate">{movie.Title}</h4>
+                        <p className="text-xs text-gray-400">{movie.Year}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </section>
         )}
       </main>
+
+      {/* Movie Details Modal */}
+      {selectedMovie && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6 overflow-auto">
+          <div className="bg-gray-900 rounded-2xl max-w-4xl w-full p-8">
+            {detailsLoading ? (
+              <p className="text-center py-20">Loading full details...</p>
+            ) : movieDetails ? (
+              <div className="flex flex-col md:flex-row gap-8">
+                {movieDetails.Poster !== "N/A" && (
+                  <img src={movieDetails.Poster} alt={movieDetails.Title} className="w-full md:w-80 rounded-xl" />
+                )}
+                <div className="flex-1">
+                  <h2 className="text-4xl font-bold">{movieDetails.Title}</h2>
+                  <p className="text-xl text-gray-400">{movieDetails.Year} • {movieDetails.Runtime}</p>
+                  
+                  <p className="mt-6 text-lg leading-relaxed">{movieDetails.Plot}</p>
+
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <p><strong>Director:</strong> {movieDetails.Director}</p>
+                    <p><strong>Writer:</strong> {movieDetails.Writer}</p>
+                    <p><strong>Actors:</strong> {movieDetails.Actors}</p>
+                    <p><strong>Genre:</strong> {movieDetails.Genre}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <button 
+              onClick={closeModal}
+              className="mt-10 w-full py-4 bg-red-600 hover:bg-red-700 rounded-xl font-bold text-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 border-t border-gray-800 py-8 text-center text-sm text-gray-500">
+        <p>&copy; {new Date().getFullYear()} MovieFinder. Built for learning.</p>
+        <p className="mt-1 text-xs">Data provided by OMDb API</p>
+      </footer>
     </div>
   );
 }
